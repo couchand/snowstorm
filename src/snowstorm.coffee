@@ -31,16 +31,14 @@ class ModifierFlake
     mods = []
     for annotation in options.modifiers.annotations
       annExp = new RegExp "^#{annotation}$", 'i'
-      for mod in @modifiers
-        if annExp.test mod.annotation
-          anns.push annotation
-          continue
+      for mod in @modifiers when annExp.test mod.annotation
+        anns.push annotation
+        continue
     for modifier in options.modifiers.order
       modExp = new RegExp "^#{modifier}$", 'i'
-      for mod in @modifiers
-        if modExp.test mod
-          mods.push modifier
-          continue
+      for mod in @modifiers when modExp.test mod
+        mods.push modifier
+        continue
     result = ""
     if anns.length
       result += anns.join ' '
