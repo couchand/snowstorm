@@ -27,6 +27,10 @@ class Options
           methodDeclaration: yes
           assignment: yes
           collectionInitializer: yes
+    @indent =
+      size:
+        general: 4
+      character: ' '
     @types =
       capitalize: yes
     @modifiers =
@@ -42,6 +46,18 @@ class Options
         '@isTest', '@future', '@deprecated', '@ReadOnly'
 #        '@isTest(SeeAllData=)', "@RestResource(urlMapping='/myResource')"
       ]
+
+getIndentChar = (options, num) ->
+  tabs = ''
+  for i in [0...num]
+    for j in [0...options.indent.size.general]
+      tabs += options.indent.character
+  tabs
+
+indent = (txt, options, num=1) ->
+  return '' if txt is ''
+  tabs = getIndentChar options, num
+  tabs + txt.replace /\n/g, "\n#{tabs}"
 
 class ModifierFlake
   constructor: (@modifiers) ->
@@ -111,6 +127,7 @@ class MethodFlake
     result += "\n" if options.braces.wrapping.beforeRight
     result += "}"
     result += "\n" if options.braces.wrapping.afterRight
+    result
 
 class PropertyFlake
   constructor: (node) ->
@@ -142,15 +159,19 @@ class ClassFlake
     @body = (classMember member for member in node.body)
 
   compile: (options) ->
+    class_members = (member.compile options for member in @body).join '\n'
+    class_members = indent class_members, options
+
     result = @modifiers.compile(options)
     result += "class #{@name}"
     result += "\n" if options.braces.wrapping.beforeLeft
     result += "{"
     result += "\n" if options.braces.wrapping.afterLeft
-    result += (member.compile options for member in @body).join '\n'
+    result += class_members
     result += "\n" if options.braces.wrapping.beforeRight
     result += "}"
     result += "\n" if options.braces.wrapping.afterRight
+    result
 
 class Snowstorm
   constructor: ->
