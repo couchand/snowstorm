@@ -112,10 +112,26 @@ class MethodFlake
     result += "}"
     result += "\n" if options.braces.wrapping.afterRight
 
+class PropertyFlake
+  constructor: (node) ->
+    @name = node.name
+    @type = node.type
+    @modifiers = new ModifierFlake node.modifiers
+
+  compile: (options) ->
+    result = @modifiers.compile(options)
+    result += "#{@type} #{@name}"
+    result += @initializer.compile(options) if @initializer
+    result += ';'
+
 classMember = (node) ->
   switch (node.member)
     when 'method'
       new MethodFlake node
+    when 'property'
+      new PropertyFlake node
+    when 'inner_class'
+      new ClassFlake node
     else
       throw new Error "unknown class member type #{node.member} at line #{node.position.first_line}"
 
