@@ -47,10 +47,34 @@ class ModifierFlake
       result += mods.join ' '
     result += ' '
 
+class MethodFlake
+  constructor: (node) ->
+    @name = node.name
+    @type = node.type
+    @modifiers = new ModifierFlake node.modifiers
+
+  compile: (options) ->
+    result = @modifiers.compile(options)
+    result += "#{@type} #{@name}()"
+    result += "\n" if options.braces.wrapping.beforeLeft
+    result += "{"
+    result += "\n" if options.braces.wrapping.afterLeft
+    result += "\n" if options.braces.wrapping.beforeRight
+    result += "}"
+    result += "\n" if options.braces.wrapping.afterRight
+
+classMember = (node) ->
+  switch (node.member)
+    when 'method'
+      new MethodFlake node
+    else
+      throw new Error "unknown class member type #{node.member} at line #{node.position.first_line}"
+
 class ClassFlake
   constructor: (node) ->
     @name = node.name
     @modifiers = new ModifierFlake node.modifiers
+    @body = (classMember member for member in node.body)
 
   compile: (options) ->
     result = @modifiers.compile(options)
@@ -58,6 +82,7 @@ class ClassFlake
     result += "\n" if options.braces.wrapping.beforeLeft
     result += "{"
     result += "\n" if options.braces.wrapping.afterLeft
+    result += (member.compile options for member in @body).join '\n'
     result += "\n" if options.braces.wrapping.beforeRight
     result += "}"
     result += "\n" if options.braces.wrapping.afterRight
