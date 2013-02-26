@@ -134,12 +134,21 @@ class MethodFlake
 class AccessorFlake
   constructor: (node) ->
     @accessor = node.accessor
+    @body = node.body
     @modifiers = new ModifierFlake node.modifiers
 
   compile: (options) ->
     result = @modifiers.compile options
     result += @accessor
-    result += ';'
+    unless @body
+      result += ';'
+    else
+      result += "\n" if options.braces.wrapping.beforeLeft
+      result += "{"
+      result += "\n" if options.braces.wrapping.afterLeft
+      result += "\n" if options.braces.wrapping.beforeRight
+      result += "}"
+      result += "\n" if options.braces.wrapping.afterRight
 
 class PropertyFlake
   constructor: (node) ->
