@@ -5,6 +5,9 @@ a = require '../lib/ascent-0.0.1'
 class Options
   constructor: ->
     @braces =
+      empty:
+        collapse: yes
+        cuddle: ' '     # cuddled brace separator character
       wrapping:
         before:
           block:
@@ -76,12 +79,19 @@ assignmentClause = (value, options) ->
   result += value
 
 blockStatements = (statements, options) ->
+  block_empty = statements is ''
+  space_char = if typeof options.braces.empty.cuddle is 'string' then options.braces.empty.cuddle else ' '
+  supress_initial_newline = block_empty and options.braces.empty.cuddle
+  initial_newline = if supress_initial_newline then no else options.braces.wrapping.before.block.start
+  supress_interior_newlines = block_empty and options.braces.empty.collapse
+
   result = ''
-  result += "\n" if options.braces.wrapping.before.block.start
+  result += "\n" if initial_newline
+  result += space_char if supress_initial_newline
   result += "{"
-  result += "\n" if options.braces.wrapping.after.block.start
-  result += indent statements, options
-  result += "\n" if options.braces.wrapping.before.block.end
+  result += "\n" if options.braces.wrapping.after.block.start and not supress_interior_newlines
+  result += indent statements, options unless block_empty
+  result += "\n" if options.braces.wrapping.before.block.end and not supress_interior_newlines
   result += "}"
   result += "\n" if options.braces.wrapping.after.block.end
   result
