@@ -112,20 +112,41 @@ class ParametersFlake
     result += ' ' if options.parens.space.within.methodDeclaration && @parameters.length
     result += ')'
 
+class DeclarationFlake
+  constructor: (node) ->
+    @name = node.name
+    @type = node.type
+
+  compile: (options) ->
+    result = "#{@type} #{@name}"
+    result += ';'
+
+statementFactory = (node) ->
+  switch node.statement
+    when 'declaration'
+      new DeclarationFlake node
+    else
+      throw new Error "unknown statement type #{node.statement} at line #{node.position.first_line}"
+
 class MethodFlake
   constructor: (node) ->
     @name = node.name
     @type = node.type
+    @body = (statementFactory statement for statement in node.body)
     @modifiers = new ModifierFlake node.modifiers
     @parameters = new ParametersFlake node.parameters
 
   compile: (options) ->
+    statements = (statement.compile options for statement in @body).join '\n'
+    statements = indent statements, options
+
     result = @modifiers.compile(options)
     result += "#{@type} #{@name}"
     result += @parameters.compile(options)
     result += "\n" if options.braces.wrapping.beforeLeft
     result += "{"
     result += "\n" if options.braces.wrapping.afterLeft
+    result += statements
     result += "\n" if options.braces.wrapping.beforeRight
     result += "}"
     result += "\n" if options.braces.wrapping.afterRight
@@ -134,7 +155,7 @@ class MethodFlake
 class AccessorFlake
   constructor: (node) ->
     @accessor = node.accessor
-    @body = node.body
+    @body = (statementFactory statement for statement in node.body) if node.body
     @modifiers = new ModifierFlake node.modifiers
 
   compile: (options) ->
@@ -143,9 +164,13 @@ class AccessorFlake
     unless @body
       result += ';'
     else
+      statements = (statement.compile options for statement in @body).join '\n'
+      statements = indent statements, options
+
       result += "\n" if options.braces.wrapping.beforeLeft
       result += "{"
       result += "\n" if options.braces.wrapping.afterLeft
+      result += statements
       result += "\n" if options.braces.wrapping.beforeRight
       result += "}"
       result += "\n" if options.braces.wrapping.afterRight
