@@ -32,11 +32,15 @@ class ModifierFlake
     for annotation in options.modifiers.annotations
       annExp = new RegExp "^#{annotation}$", 'i'
       for mod in @modifiers
-        anns.push annotation if annExp.test mod.annotation
+        if annExp.test mod.annotation
+          anns.push annotation
+          continue
     for modifier in options.modifiers.order
       modExp = new RegExp "^#{modifier}$", 'i'
       for mod in @modifiers
-        mods.push modifier if modExp.test mod
+        if modExp.test mod
+          mods.push modifier
+          continue
     result = ""
     if anns.length
       result += anns.join ' '
