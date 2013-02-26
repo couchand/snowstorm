@@ -27,6 +27,10 @@ class Options
           methodDeclaration: yes
           assignment: yes
           collectionInitializer: yes
+    @operators =
+      space:
+        around:
+          assignment: yes
     @indent =
       size:
         general: 4
@@ -123,9 +127,15 @@ class DeclarationFlake
   constructor: (node) ->
     @name = node.name
     @type = new TypeFlake node.type
+    @initializer = node.initializer
 
   compile: (options) ->
     result = "#{@type.compile options} #{@name}"
+    if @initializer
+      result += ' ' if options.operators.space.around.assignment
+      result += '='
+      result += ' ' if options.operators.space.around.assignment
+      result += @initializer
     result += ';'
 
 statementFactory = (node) ->
@@ -189,6 +199,7 @@ class PropertyFlake
     @modifiers = new ModifierFlake node.modifiers
     @get = new AccessorFlake node.get if node.get
     @set = new AccessorFlake node.set if node.set
+    @initializer = node.initializer
 
   compileAccessors: (options) ->
     all = []
@@ -208,7 +219,11 @@ class PropertyFlake
       result += "}"
       result += "\n" if options.braces.wrapping.afterRight
     else
-      result += @initializer.compile(options) if @initializer
+      if @initializer
+        result += ' ' if options.operators.space.around.assignment
+        result += '='
+        result += ' ' if options.operators.space.around.assignment
+        result += @initializer
       result += ';'
 
 classMember = (node) ->
