@@ -30,6 +30,7 @@ class Options
     @indent =
       size:
         general: 4
+        leading: 0
       character: ' '
     @types =
       capitalize: yes
@@ -171,6 +172,8 @@ class ClassFlake
     result += "\n" if options.braces.wrapping.beforeRight
     result += "}"
     result += "\n" if options.braces.wrapping.afterRight
+
+    result = indent result, options if options.indent.size.leading
     result
 
 class Snowstorm
