@@ -63,6 +63,7 @@ indent = (txt, options, num=1) ->
 class ModifierFlake
   constructor: (@modifiers) ->
   compile: (options) ->
+    return '' unless @modifiers
     anns = []
     mods = []
     for annotation in options.modifiers.annotations
@@ -130,13 +131,29 @@ class MethodFlake
     result += "\n" if options.braces.wrapping.afterRight
     result
 
+class AccessorFlake
+  constructor: (node) ->
+    @accessor = node.accessor
+    @modifiers = new ModifierFlake node.modifiers
+
+  compile: (options) ->
+    result = @modifiers.compile options
+    result += @accessor
+    result += ';'
+
 class PropertyFlake
   constructor: (node) ->
     @name = node.name
     @type = node.type
     @modifiers = new ModifierFlake node.modifiers
-    @get = node.get
-    @set = node.set
+    @get = new AccessorFlake node.get if node.get
+    @set = new AccessorFlake node.set if node.set
+
+  compileAccessors: (options) ->
+    all = []
+    all.push @get.compile options if @get
+    all.push @set.compile options if @set
+    return indent all.join('\n'), options
 
   compile: (options) ->
     result = @modifiers.compile(options)
@@ -145,6 +162,7 @@ class PropertyFlake
       result += "\n" if options.braces.wrapping.beforeLeft
       result += "{"
       result += "\n" if options.braces.wrapping.afterLeft
+      result += @compileAccessors options
       result += "\n" if options.braces.wrapping.beforeRight
       result += "}"
       result += "\n" if options.braces.wrapping.afterRight
