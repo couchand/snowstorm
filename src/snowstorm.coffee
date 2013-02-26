@@ -6,10 +6,14 @@ class Options
   constructor: ->
     @braces =
       wrapping:
-        beforeLeft: yes
-        afterLeft: yes
-        beforeRight: yes
-        afterRight: yes
+        before:
+          block:
+            start: yes
+            end: yes
+        after:
+          block:
+            start: yes
+            end: yes
     @parens =
       space:
         before:
@@ -73,13 +77,13 @@ assignmentClause = (value, options) ->
 
 blockStatements = (statements, options) ->
   result = ''
-  result += "\n" if options.braces.wrapping.beforeLeft
+  result += "\n" if options.braces.wrapping.before.block.start
   result += "{"
-  result += "\n" if options.braces.wrapping.afterLeft
+  result += "\n" if options.braces.wrapping.after.block.start
   result += indent statements, options
-  result += "\n" if options.braces.wrapping.beforeRight
+  result += "\n" if options.braces.wrapping.before.block.end
   result += "}"
-  result += "\n" if options.braces.wrapping.afterRight
+  result += "\n" if options.braces.wrapping.after.block.end
   result
 
 class ModifierFlake
