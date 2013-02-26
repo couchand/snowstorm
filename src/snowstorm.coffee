@@ -64,6 +64,24 @@ indent = (txt, options, num=1) ->
   tabs = getIndentChar options, num
   tabs + txt.replace /\n/g, "\n#{tabs}"
 
+assignmentClause = (value, options) ->
+  result = ''
+  result += ' ' if options.operators.space.around.assignment
+  result += '='
+  result += ' ' if options.operators.space.around.assignment
+  result += value
+
+blockStatements = (statements, options) ->
+  result = ''
+  result += "\n" if options.braces.wrapping.beforeLeft
+  result += "{"
+  result += "\n" if options.braces.wrapping.afterLeft
+  result += indent statements, options
+  result += "\n" if options.braces.wrapping.beforeRight
+  result += "}"
+  result += "\n" if options.braces.wrapping.afterRight
+  result
+
 class ModifierFlake
   constructor: (@modifiers) ->
   compile: (options) ->
@@ -132,10 +150,7 @@ class DeclarationFlake
   compile: (options) ->
     result = "#{@type.compile options} #{@name}"
     if @initializer
-      result += ' ' if options.operators.space.around.assignment
-      result += '='
-      result += ' ' if options.operators.space.around.assignment
-      result += @initializer
+      result += assignmentClause @initializer, options
     result += ';'
 
 statementFactory = (node) ->
@@ -160,13 +175,7 @@ class MethodFlake
     result = @modifiers.compile(options)
     result += "#{@type.compile options} #{@name}"
     result += @parameters.compile(options)
-    result += "\n" if options.braces.wrapping.beforeLeft
-    result += "{"
-    result += "\n" if options.braces.wrapping.afterLeft
-    result += statements
-    result += "\n" if options.braces.wrapping.beforeRight
-    result += "}"
-    result += "\n" if options.braces.wrapping.afterRight
+    result += blockStatements statements, options
     result
 
 class AccessorFlake
@@ -183,14 +192,7 @@ class AccessorFlake
     else
       statements = (statement.compile options for statement in @body).join '\n'
       statements = indent statements, options
-
-      result += "\n" if options.braces.wrapping.beforeLeft
-      result += "{"
-      result += "\n" if options.braces.wrapping.afterLeft
-      result += statements
-      result += "\n" if options.braces.wrapping.beforeRight
-      result += "}"
-      result += "\n" if options.braces.wrapping.afterRight
+      result += blockStatements statements, options
 
 class PropertyFlake
   constructor: (node) ->
@@ -211,19 +213,10 @@ class PropertyFlake
     result = @modifiers.compile(options)
     result += "#{@type.compile options} #{@name}"
     if @get or @set
-      result += "\n" if options.braces.wrapping.beforeLeft
-      result += "{"
-      result += "\n" if options.braces.wrapping.afterLeft
-      result += @compileAccessors options
-      result += "\n" if options.braces.wrapping.beforeRight
-      result += "}"
-      result += "\n" if options.braces.wrapping.afterRight
+      result += blockStatements @compileAccessors(options), options
     else
       if @initializer
-        result += ' ' if options.operators.space.around.assignment
-        result += '='
-        result += ' ' if options.operators.space.around.assignment
-        result += @initializer
+        result += assignmentClause @initializer, options
       result += ';'
 
 classMember = (node) ->
@@ -249,13 +242,7 @@ class ClassFlake
 
     result = @modifiers.compile(options)
     result += "class #{@name}"
-    result += "\n" if options.braces.wrapping.beforeLeft
-    result += "{"
-    result += "\n" if options.braces.wrapping.afterLeft
-    result += class_members
-    result += "\n" if options.braces.wrapping.beforeRight
-    result += "}"
-    result += "\n" if options.braces.wrapping.afterRight
+    result += blockStatements class_members, options
 
     result = indent result, options if options.indent.size.leading
     result
