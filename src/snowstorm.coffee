@@ -135,12 +135,22 @@ class PropertyFlake
     @name = node.name
     @type = node.type
     @modifiers = new ModifierFlake node.modifiers
+    @get = node.get
+    @set = node.set
 
   compile: (options) ->
     result = @modifiers.compile(options)
     result += "#{@type} #{@name}"
-    result += @initializer.compile(options) if @initializer
-    result += ';'
+    if @get or @set
+      result += "\n" if options.braces.wrapping.beforeLeft
+      result += "{"
+      result += "\n" if options.braces.wrapping.afterLeft
+      result += "\n" if options.braces.wrapping.beforeRight
+      result += "}"
+      result += "\n" if options.braces.wrapping.afterRight
+    else
+      result += @initializer.compile(options) if @initializer
+      result += ';'
 
 classMember = (node) ->
   switch (node.member)
