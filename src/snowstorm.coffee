@@ -82,18 +82,21 @@ blockStatements = (statements, options) ->
   block_empty = statements is ''
   space_char = if typeof options.braces.empty.cuddle is 'string' then options.braces.empty.cuddle else ' '
   supress_initial_newline = block_empty and options.braces.empty.cuddle
-  initial_newline = if supress_initial_newline then no else options.braces.wrapping.before.block.start
   supress_interior_newlines = block_empty and options.braces.empty.collapse
+  before_left = options.braces.wrapping.before.block.start and not supress_initial_newline
+  after_left = options.braces.wrapping.after.block.start and not supress_interior_newlines
+  before_right = options.braces.wrapping.before.block.end and not supress_interior_newlines
+  after_right = options.braces.wrapping.after.block.end
 
   result = ''
-  result += "\n" if initial_newline
   result += space_char if supress_initial_newline
+  result += "\n" if before_left
   result += "{"
-  result += "\n" if options.braces.wrapping.after.block.start and not supress_interior_newlines
+  result += "\n" if after_left
   result += indent statements, options unless block_empty
-  result += "\n" if options.braces.wrapping.before.block.end and not supress_interior_newlines
+  result += "\n" if before_right
   result += "}"
-  result += "\n" if options.braces.wrapping.after.block.end
+  result += "\n" if after_right
   result
 
 class ModifierFlake
