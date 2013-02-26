@@ -80,12 +80,13 @@ assignmentClause = (value, options) ->
 
 blockStatements = (statements, options) ->
   block_empty = statements is ''
+  statements = statements.replace /\n$/, ''
   space_char = if typeof options.braces.empty.cuddle is 'string' then options.braces.empty.cuddle else ' '
   supress_initial_newline = block_empty and options.braces.empty.cuddle
   supress_interior_newlines = block_empty and options.braces.empty.collapse
   before_left = options.braces.wrapping.before.block.start and not supress_initial_newline
   after_left = options.braces.wrapping.after.block.start and not supress_interior_newlines
-  before_right = options.braces.wrapping.before.block.end and not supress_interior_newlines
+  before_right = options.braces.wrapping.before.block.end and not block_empty
   after_right = options.braces.wrapping.after.block.end
 
   result = ''
@@ -198,7 +199,6 @@ class MethodFlake
 
   compile: (options) ->
     statements = (statement.compile options for statement in @body).join '\n'
-    statements = indent statements, options
 
     result = @modifiers.compile(options)
     result += "#{@type.compile options} #{@name}"
@@ -219,7 +219,6 @@ class AccessorFlake
       result += ';'
     else
       statements = (statement.compile options for statement in @body).join '\n'
-      statements = indent statements, options
       result += blockStatements statements, options
 
 class PropertyFlake
@@ -235,7 +234,7 @@ class PropertyFlake
     all = []
     all.push @get.compile options if @get
     all.push @set.compile options if @set
-    return indent all.join('\n'), options
+    return all.join '\n'
 
   compile: (options) ->
     result = @modifiers.compile(options)
@@ -266,7 +265,6 @@ class ClassFlake
 
   compile: (options) ->
     class_members = (member.compile options for member in @body).join '\n'
-    class_members = indent class_members, options
 
     result = @modifiers.compile(options)
     result += "class #{@name}"
