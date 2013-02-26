@@ -1,0 +1,32 @@
+#!/usr/local/bin/coffee
+# snowstorm cli
+
+fs = require 'fs'
+path = require 'path'
+
+snowstorm = require '../src/snowstorm'
+
+main = (argv) ->
+  if !argv[1]?
+    console.log "Usage: #{argv[0]} FILE [ FILE ... ]"
+    return
+
+  all_files = argv.slice 1
+
+  for file in all_files
+    dir = path.dirname file
+    filename = path.basename file
+
+    name = filename.match(/(.+)\.cls$/)?[1]
+    continue unless name
+    outfile = path.join dir, "#{name}.formatted.cls"
+
+    cls = fs.readFileSync(file).toString()
+    console.log "now formatting #{name}"
+    try
+      formatted = snowstorm.format cls
+      fs.writeFileSync outfile, formatted
+    catch err
+      console.log "File #{file}: #{err}\n"
+
+main process.argv.slice 1
