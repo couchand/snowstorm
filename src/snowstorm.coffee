@@ -157,10 +157,21 @@ class DeclarationFlake
       result += assignmentClause @initializer, options
     result += ';'
 
+class ReturnFlake
+  constructor: (node) ->
+    @returns = node.returns[0] if node.returns.length
+
+  compile: (options) ->
+    result = 'return'
+    result += " #{@returns}" if @returns
+    result += ';'
+
 statementFactory = (node) ->
   switch node.statement
     when 'declaration'
       new DeclarationFlake node
+    when 'return'
+      new ReturnFlake node
     else
       throw new Error "unknown statement type #{node.statement} at line #{node.position.first_line}"
 
