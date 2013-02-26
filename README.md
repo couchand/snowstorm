@@ -17,7 +17,11 @@ of Apex code.  It is based on the ascent parser.
 getting started
 ---------------
 
-_nothing yet_
+From the command line you can format files with:
+
+```bash
+> ./script/snowstorm path/to/file.cls > formatted.cls
+```
 
 options
 -------
