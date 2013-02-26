@@ -87,16 +87,23 @@ class ModifierFlake
 capitalize = (str) ->
   str[0].toUpperCase() + str[1..]
 
-class ParameterFlake
+class TypeFlake
   constructor: (node) ->
-    @name = node.name
-    @type = node.type
+    @type = node
 
   compile: (options) ->
     type = @type
     if options.types.capitalize
       type = (capitalize t for t in @type.split '.').join '.'
-    "#{type} #{@name}"
+    type
+
+class ParameterFlake
+  constructor: (node) ->
+    @name = node.name
+    @type = new TypeFlake node.type
+
+  compile: (options) ->
+    "#{@type.compile options} #{@name}"
 
 class ParametersFlake
   constructor: (params) ->
@@ -115,10 +122,10 @@ class ParametersFlake
 class DeclarationFlake
   constructor: (node) ->
     @name = node.name
-    @type = node.type
+    @type = new TypeFlake node.type
 
   compile: (options) ->
-    result = "#{@type} #{@name}"
+    result = "#{@type.compile options} #{@name}"
     result += ';'
 
 statementFactory = (node) ->
@@ -131,7 +138,7 @@ statementFactory = (node) ->
 class MethodFlake
   constructor: (node) ->
     @name = node.name
-    @type = node.type
+    @type = new TypeFlake node.type
     @body = (statementFactory statement for statement in node.body)
     @modifiers = new ModifierFlake node.modifiers
     @parameters = new ParametersFlake node.parameters
@@ -141,7 +148,7 @@ class MethodFlake
     statements = indent statements, options
 
     result = @modifiers.compile(options)
-    result += "#{@type} #{@name}"
+    result += "#{@type.compile options} #{@name}"
     result += @parameters.compile(options)
     result += "\n" if options.braces.wrapping.beforeLeft
     result += "{"
@@ -178,7 +185,7 @@ class AccessorFlake
 class PropertyFlake
   constructor: (node) ->
     @name = node.name
-    @type = node.type
+    @type = new TypeFlake node.type
     @modifiers = new ModifierFlake node.modifiers
     @get = new AccessorFlake node.get if node.get
     @set = new AccessorFlake node.set if node.set
@@ -191,7 +198,7 @@ class PropertyFlake
 
   compile: (options) ->
     result = @modifiers.compile(options)
-    result += "#{@type} #{@name}"
+    result += "#{@type.compile options} #{@name}"
     if @get or @set
       result += "\n" if options.braces.wrapping.beforeLeft
       result += "{"
