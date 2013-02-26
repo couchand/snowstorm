@@ -10,6 +10,25 @@ class Options
         afterLeft: yes
         beforeRight: yes
         afterRight: yes
+    @parens =
+      space:
+        before:
+          methodCall: no
+          methodDeclaration: no
+          statement: yes
+        within:
+          methodCall: yes
+          methodDeclaration: yes
+          statement: yes
+    @commas =
+      space:
+        after:
+          methodCall: yes
+          methodDeclaration: yes
+          assignment: yes
+          collectionInitializer: yes
+    @types =
+      capitalize: yes
     @modifiers =
       wrapping:
         afterAnnotations: yes
@@ -47,15 +66,45 @@ class ModifierFlake
       result += mods.join ' '
     result += ' '
 
+capitalize = (str) ->
+  str[0].toUpperCase() + str[1..]
+
+class ParameterFlake
+  constructor: (node) ->
+    @name = node.name
+    @type = node.type
+
+  compile: (options) ->
+    type = @type
+    if options.types.capitalize
+      type = (capitalize t for t in @type.split '.').join '.'
+    "#{type} #{@name}"
+
+class ParametersFlake
+  constructor: (params) ->
+    @parameters = (new ParameterFlake param for param in params)
+
+  compile: (options) ->
+    joiner = if options.commas.space.after.methodDeclaration then ', ' else ','
+    result = ''
+    result += ' ' if options.parens.space.before.methodDeclaration
+    result += '('
+    result += ' ' if options.parens.space.within.methodDeclaration && @parameters.length
+    result += (param.compile options for param in @parameters).join joiner
+    result += ' ' if options.parens.space.within.methodDeclaration && @parameters.length
+    result += ')'
+
 class MethodFlake
   constructor: (node) ->
     @name = node.name
     @type = node.type
     @modifiers = new ModifierFlake node.modifiers
+    @parameters = new ParametersFlake node.parameters
 
   compile: (options) ->
     result = @modifiers.compile(options)
-    result += "#{@type} #{@name}()"
+    result += "#{@type} #{@name}"
+    result += @parameters.compile(options)
     result += "\n" if options.braces.wrapping.beforeLeft
     result += "{"
     result += "\n" if options.braces.wrapping.afterLeft
